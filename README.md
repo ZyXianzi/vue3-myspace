@@ -1,24 +1,2 @@
-# myspace
-
-## Project setup
-```
-npm install
-```
-
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
-
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+### 一个几乎不可用的个人空间(后端api有问题)
+### [在线地址](https://app1186.acapp.acwing.com.cn/myspace)
