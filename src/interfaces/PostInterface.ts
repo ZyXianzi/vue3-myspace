@@ -1,6 +1,6 @@
 type Post = {
-    id: number;
-    author: number,
+    id: string | number;
+    author: string,
     content: string,
 }
 

@@ -2,16 +2,12 @@
     <div class="card">
         <div class="card-body">
             <div class="row">
-                <div class="col-4">
-                    <img
-                        class="img-fluid"
-                        src="../../static/images/86-icon.png"
-                        alt=""
-                    />
+                <div class="col-4 img-field">
+                    <img class="img-fluid" :src="user.photo" alt="" />
                 </div>
                 <div class="col-8">
-                    <div class="username">{{ fullName }}</div>
-                    <div class="fans">粉丝：{{ user.follower }}</div>
+                    <div class="username">{{ user.username }}</div>
+                    <div class="fans">粉丝：{{ user.followerCount }}</div>
                     <button
                         @click="follow"
                         v-if="!user.is_followed"
@@ -35,33 +31,63 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, PropType } from "vue";
-import UserInterface from "@/interfaces/UserInterface";
-
+import { defineComponent, PropType } from "vue";
+import { LocalUser } from "@/interfaces/User";
+import axios from "axios";
+import { useStore } from "vuex";
+import { key } from "@/store";
 
 export default defineComponent({
     name: "UserInfo",
     props: {
         user: {
-            type: Object as PropType<UserInterface>,
+            type: Object as PropType<LocalUser>,
             required: true,
         },
     },
     setup(props, context) {
-        let fullName = computed(
-            () => props.user.firstName + " " + props.user.lastName
-        );
-
+        const store = useStore(key);
         const follow = () => {
-            context.emit('follow');
-        }
+            axios
+                .post(
+                    "https://app165.acapp.acwing.com.cn/myspace/follow/",
+                    {
+                        target_id: props.user.id,
+                    },
+                    {
+                        headers: {
+                            'Authorization': "Bearer " + store.state.user.access,
+                        },
+                    }
+                )
+                .then((resp) => {
+                    if (resp.data.result === "success") {
+                        context.emit("follow");
+                    }
+                });
+        };
 
         const unfollow = () => {
-            context.emit('unfollow');
-        }
+            axios
+                .post(
+                    "/myspace/follow/",
+                    {
+                        target_id: props.user.id,
+                    },
+                    {
+                        headers: {
+                            'Authorization': "Bearer " + store.state.user.access,
+                        },
+                    }
+                )
+                .then((resp) => {
+                    if (resp.data.result === "success") {
+                        context.emit("unfollow");
+                    }
+                });
+        };
 
         return {
-            fullName,
             follow,
             unfollow,
         };
@@ -86,5 +112,11 @@ img {
 button {
     padding: 2px 4px;
     font-size: 12px;
+}
+
+.img-field {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 </style>

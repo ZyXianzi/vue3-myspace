@@ -1,26 +1,29 @@
 <template>
     <ContentBase>
-      <div class="row">
-          <div class="col-3">
-              <UserInfo @follow="follow" @unfollow="unfollow" :user="user" />
-              <UserWrite @post="post" />
-          </div>
-          <div class="col-9">
-              <UserPosts :posts="posts" />
-          </div>
-      </div>
+        <div class="row">
+            <div class="col-3">
+                <UserInfo @follow="follow" @unfollow="unfollow" :user="user" />
+                <UserWrite v-if="is_me" @post_a_post="post_a_post" />
+            </div>
+            <div class="col-9">
+                <UserPosts :user="user" :posts="posts" @delete_a_post="delete_a_post" />
+            </div>
+        </div>
     </ContentBase>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, reactive, computed } from "vue";
 import ContentBase from "@/components/ContentBase.vue";
 import UserInfo from "@/components/UserInfo.vue";
 import UserPosts from "@/components/UserPosts.vue";
 import UserWrite from "@/components/UserWrite.vue";
-import { reactive } from "vue";
-import UserInterface from "@/interfaces/UserInterface";
+import { LocalUser } from "@/interfaces/User";
 import PostInterface from "@/interfaces/PostInterface";
+import { useRoute } from "vue-router";
+import axios from "axios";
+import { useStore } from "vuex";
+import { key } from "@/store";
 
 export default defineComponent({
     name: "UserListView",
@@ -31,66 +34,77 @@ export default defineComponent({
         UserWrite,
     },
     setup() {
-        const user: UserInterface = reactive({
-            username: "ZyXianzi",
-            lastName: "Zheng",
-            firstName: "Feifan",
-            follower: 0,
-            is_followed: false,
+        const store = useStore(key);
+        const route = useRoute();
+        const userId = route.params.userId;
+        const user: LocalUser = reactive({} as LocalUser);
+        const posts: PostInterface = reactive({} as PostInterface);
+
+        axios.get("https://app165.acapp.acwing.com.cn/myspace/getinfo/", {
+            params: {
+                user_id: userId,
+            },
+            headers: {
+                Authorization: "Bearer " + store.state.user.access,
+            },
+        }).then(resp => {
+            user.id = resp.data.id;
+            user.username = resp.data.username;
+            user.photo = resp.data.photo;
+            user.followerCount = resp.data.followerCount;
         });
 
-        const posts: PostInterface = reactive({
-            count: 3,
-            posts: [
-                {
-                    id: 1,
-                    author: 1,
-                    content: "Vue真好用啊",
-                },
-                {
-                    id: 2,
-                    author: 1,
-                    content: "React真好用啊",
-                },
-                {
-                    id: 3,
-                    author: 1,
-                    content: "Angular真好用啊",
-                },
-            ]
+        axios.get("https://app165.acapp.acwing.com.cn/myspace/post/", {
+            params: {
+                user_id: userId,
+            },
+            headers: {
+                Authorization: "Bearer " + store.state.user.access,
+            },
+        }).then(resp => {
+            posts.posts = resp.data;
+            posts.count = resp.data.length;
         });
 
         const follow = () => {
             if (user.is_followed) return;
             user.is_followed = true;
-            user.follower ++;
-        }
+            user.followerCount++;
+        };
 
         const unfollow = () => {
             if (!user.is_followed) return;
             user.is_followed = false;
-            user.follower --;
-        }
+            user.followerCount--;
+        };
 
-        const post = (content: string) => {
-            posts.count ++;
+        const post_a_post = (content: string) => {
+            posts.count++;
             posts.posts.unshift({
                 id: posts.count,
-                author: 1,
+                author: store.state.user.username,
                 content: content,
             });
+        };
+
+        const delete_a_post = (post_id: number) => {
+            posts.posts = posts.posts.filter(post => post.id !== post_id);
+            posts.count = posts.posts.length;
         }
+
+        const is_me = computed(() => userId == store.state.user.id);
 
         return {
             user,
             posts,
             follow,
             unfollow,
-            post,
-        }
-    }
+            post_a_post,
+            is_me,
+            delete_a_post,
+        };
+    },
 });
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

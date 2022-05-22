@@ -9,7 +9,7 @@ import { defineComponent } from "vue";
 import ContentBase from "@/components/ContentBase.vue";
 
 export default defineComponent({
-    name: "UserListView",
+    name: "LoginView",
     components: {
         ContentBase,
     },
